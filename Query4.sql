@@ -1,12 +1,17 @@
+WITH MalePopulationRank AS (
+    SELECT 
+        zipcode,
+        SUM(CASE WHEN gender = 'male' THEN population ELSE 0 END) AS male_population,
+        ROW_NUMBER() OVER (ORDER BY SUM(CASE WHEN gender = 'male' THEN population ELSE 0 END) ASC) AS row_num
+    FROM 
+        `bigquery-public-data.census_bureau_usa.population_by_zip_2010`
+    GROUP BY 
+        zipcode
+)
 SELECT 
-    CONCAT(minimum_age, '-', maximum_age) AS age_group,
-    SUM(population) AS male_population
+    zipcode,
+    male_population
 FROM 
-    `bigquery-public-data.census_bureau_usa.population_by_zip_2010`
+    MalePopulationRank
 WHERE 
-    zipcode = '94085' AND gender = 'male'
-GROUP BY 
-    age_group
-ORDER BY 
-    male_population DESC
-LIMIT 1;
+    row_num <= 10;
